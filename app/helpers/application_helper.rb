@@ -126,7 +126,7 @@ module ApplicationHelper
   def link_to_delete(record, options = {})
     object = record.is_a?(Array) ? record.last : record
     confirm = options[:confirm] || nil
-    
+
     link_to(t(:delete) + "!",
       options[:url] || url_for(record),
       :method => :delete,
@@ -391,7 +391,7 @@ module ApplicationHelper
     url_params.merge!(:query => params[:query]) unless params[:query].blank?
     url_params.merge!(:q => params[:q]) unless params[:q].blank?
     url_params.merge!(:view => @view) unless @view.blank? # tasks
-    
+
     exports = %w(xls csv).map do |format|
       link_to(format.upcase, url_params.merge(:format => format), :title => I18n.t(:"to_#{format}"))
     end
@@ -399,7 +399,7 @@ module ApplicationHelper
     feeds = %w(rss atom).map do |format|
       link_to(format.upcase, url_params.merge(:format => format, :authentication_credentials => token), :title => I18n.t(:"to_#{format}"))
     end
-    
+
     links = %W(perm).map do |format|
       link_to(format.upcase, url_params, :title => I18n.t(:"to_#{format}"))
     end
@@ -431,5 +431,20 @@ module ApplicationHelper
 
   def group_options
     Group.all.map {|g| [g.name, g.id]}
+  end
+
+  def entity_filter_checkbox(name, value, count)
+    checked = (session["#{controller_name}_filter"] ? session["#{controller_name}_filter"].split(",").include?(value.to_s) : count.to_i > 0)
+    values = %Q{$$("input[name='#{name}[]']").findAll(function (el) { return el.checked }).pluck("value")}
+    query = %Q{$("query").value}
+    params = h(%Q{"#{name}=" + #{values} + "&query=" + #{query}})
+
+    onclick = remote_function(
+      :url      => { :action => :filter },
+      :with     => params,
+      :loading  => "$('loading').show()",
+      :complete => "$('loading').hide()"
+    )
+    check_box_tag("#{name}[]", value, checked, :id => value, :onclick => onclick)
   end
 end
