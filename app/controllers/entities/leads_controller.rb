@@ -75,20 +75,35 @@ class LeadsController < EntitiesController
   # POST /leads
   #----------------------------------------------------------------------------
   def create
-    @users = User.except(current_user)
+    @users = User.except(@current_user)
     get_campaigns
     @comment_body = params[:comment_body]
 
     respond_with(@lead) do |format|
       if @lead.save_with_permissions(params)
         @lead.add_comment_by_user(@comment_body, current_user)
-        if called_from_index_page?
-          @leads = get_leads
-          get_data_for_sidebar
+
+        if !params[:on_success].nil?
+
+          redirect_to params[:on_success] and return
+
         else
-          get_data_for_sidebar(:campaign)
+
+          if called_from_index_page?
+            @leads = get_leads
+            get_data_for_sidebar
+          else
+            get_data_for_sidebar(:campaign)
+          end
+
         end
+
+      elsif !params[:on_failure].nil?
+
+        redirect_to params[:on_failure] and return
+
       end
+
     end
   end
 
